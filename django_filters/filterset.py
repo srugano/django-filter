@@ -51,7 +51,7 @@ def remote_queryset(field):
     return model._default_manager.complex_filter(limit_choices_to)
 
 
-class FilterSetOptions(object):
+class FilterSetOptions:
     def __init__(self, options=None):
         self.model = getattr(options, 'model', None)
         self.fields = getattr(options, 'fields', None)
@@ -178,7 +178,7 @@ FILTER_FOR_DBFIELD_DEFAULTS = {
 }
 
 
-class BaseFilterSet(object):
+class BaseFilterSet:
     FILTER_DEFAULTS = FILTER_FOR_DBFIELD_DEFAULTS
 
     def __init__(self, data=None, queryset=None, *, request=None, prefix=None):
@@ -446,7 +446,7 @@ class BaseFilterSet(object):
         lookup_name = lookup_type.capitalize()
 
         # DateTimeInFilter
-        return str('%s%sFilter' % (type_name, lookup_name))
+        return str(f'{type_name}{lookup_name}Filter')
 
 
 class FilterSet(BaseFilterSet, metaclass=FilterSetMetaclass):
@@ -454,7 +454,7 @@ class FilterSet(BaseFilterSet, metaclass=FilterSetMetaclass):
 
 
 def filterset_factory(model, fields=ALL_FIELDS):
-    meta = type(str('Meta'), (object,), {'model': model, 'fields': fields})
+    meta = type('Meta', (object,), {'model': model, 'fields': fields})
     filterset = type(str('%sFilterSet' % model._meta.object_name),
                      (FilterSet,), {'Meta': meta})
     return filterset

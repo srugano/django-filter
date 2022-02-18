@@ -1,4 +1,4 @@
-import mock
+from unittest import mock
 import unittest
 
 from django.db import models
@@ -544,14 +544,14 @@ class FilterSetClassCreationTests(TestCase):
                 model = Restaurant
                 fields = '__all__'
 
-        self.assertEqual(set(F.base_filters), set(['name', 'serves_pizza']))
+        self.assertEqual(set(F.base_filters), {'name', 'serves_pizza'})
 
         class F(FilterSet):
             class Meta:
                 model = Restaurant
                 fields = ['name', 'serves_pizza']
 
-        self.assertEqual(set(F.base_filters), set(['name', 'serves_pizza']))
+        self.assertEqual(set(F.base_filters), {'name', 'serves_pizza'})
 
     def test_custom_field_gets_filter_from_override(self):
         class F(FilterSet):
@@ -816,7 +816,7 @@ class FilterMethodTests(TestCase):
         with self.assertRaises(AssertionError) as w:
             f.filters['f'].filter(User.objects.all(), 0)
 
-        self.assertIn('%s.%s' % (F.__module__, F.__name__), str(w.exception))
+        self.assertIn(f'{F.__module__}.{F.__name__}', str(w.exception))
         self.assertIn('.filter_f()', str(w.exception))
 
     def test_method_uncallable(self):
@@ -829,7 +829,7 @@ class FilterMethodTests(TestCase):
         with self.assertRaises(AssertionError) as w:
             f.filters['f'].filter(User.objects.all(), 0)
 
-        self.assertIn('%s.%s' % (F.__module__, F.__name__), str(w.exception))
+        self.assertIn(f'{F.__module__}.{F.__name__}', str(w.exception))
         self.assertIn('.filter_f()', str(w.exception))
 
     def test_method_set_unset(self):

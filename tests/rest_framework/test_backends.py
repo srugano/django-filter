@@ -149,7 +149,7 @@ class GetSchemaFieldsTests(TestCase):
             fields = backend.get_schema_fields(BadGetQuerySetView())
             self.assertEqual(fields, [], "get_schema_fields should handle AttributeError")
 
-            warning = "{} is not compatible with schema generation".format(BadGetQuerySetView)
+            warning = f"{BadGetQuerySetView} is not compatible with schema generation"
             self.assertEqual(len(w), 1)
             self.assertEqual(str(w[0].message), warning)
 

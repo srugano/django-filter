@@ -1,7 +1,7 @@
 import datetime
 from decimal import Decimal
 
-from django.conf.urls import url
+from django.urls import path
 from django.test import TestCase
 from django.test.utils import override_settings
 from django.urls import reverse
@@ -111,9 +111,9 @@ class GetQuerysetView(generics.ListCreateAPIView):
 
 
 urlpatterns = [
-    url(r'^(?P<pk>\d+)/$', FilterClassDetailView.as_view(), name='detail-view'),
-    url(r'^$', FilterClassRootView.as_view(), name='root-view'),
-    url(r'^get-queryset/$', GetQuerysetView.as_view(), name='get-queryset-view'),
+    path('<int:pk>/', FilterClassDetailView.as_view(), name='detail-view'),
+    path('', FilterClassRootView.as_view(), name='root-view'),
+    path('get-queryset/', GetQuerysetView.as_view(), name='get-queryset-view'),
 ]
 
 
@@ -237,8 +237,8 @@ class IntegrationTestFiltering(CommonFilteringTestCase):
         search_decimal = Decimal('5.25')
         search_date = datetime.date(2012, 10, 2)
         request = factory.get('/', {
-            'decimal': '%s' % (search_decimal,),
-            'date': '%s' % (search_date,)
+            'decimal': f'{search_decimal}',
+            'date': f'{search_date}'
         })
         response = view(request).render()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -345,8 +345,8 @@ class IntegrationTestDetailFiltering(CommonFilteringTestCase):
         search_decimal = Decimal('4.25')
         high_item = self.objects.filter(decimal__gt=search_decimal)[0]
         response = self.client.get(
-            '{url}'.format(url=self._get_url(high_item)),
-            {'decimal': '{param}'.format(param=search_decimal)})
+            f'{self._get_url(high_item)}',
+            {'decimal': f'{search_decimal}'})
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
         # Tests that the decimal filter set that should succeed.
@@ -354,8 +354,8 @@ class IntegrationTestDetailFiltering(CommonFilteringTestCase):
         low_item = self.objects.filter(decimal__lt=search_decimal)[0]
         low_item_data = self._serialize_object(low_item)
         response = self.client.get(
-            '{url}'.format(url=self._get_url(low_item)),
-            {'decimal': '{param}'.format(param=search_decimal)})
+            f'{self._get_url(low_item)}',
+            {'decimal': f'{search_decimal}'})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data, low_item_data)
 
@@ -365,9 +365,9 @@ class IntegrationTestDetailFiltering(CommonFilteringTestCase):
         valid_item = self.objects.filter(decimal__lt=search_decimal, date__gt=search_date)[0]
         valid_item_data = self._serialize_object(valid_item)
         response = self.client.get(
-            '{url}'.format(url=self._get_url(valid_item)), {
-                'decimal': '{decimal}'.format(decimal=search_decimal),
-                'date': '{date}'.format(date=search_date)
+            f'{self._get_url(valid_item)}', {
+                'decimal': f'{search_decimal}',
+                'date': f'{search_date}'
             })
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data, valid_item_data)

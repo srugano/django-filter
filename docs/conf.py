@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # django-filter documentation build configuration file, created by
 # sphinx-quickstart on Mon Sep 17 11:25:20 2012.
@@ -40,8 +39,8 @@ source_suffix = '.txt'
 master_doc = 'index'
 
 # General information about the project.
-project = u'django-filter'
-copyright = u'2019, Alex Gaynor, Carlton Gibson and others.'
+project = 'django-filter'
+copyright = '2019, Alex Gaynor, Carlton Gibson and others.'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -183,8 +182,8 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'django-filter.tex', u'django-filter Documentation',
-   u'Alex Gaynor and others.', 'manual'),
+  ('index', 'django-filter.tex', 'django-filter Documentation',
+   'Alex Gaynor and others.', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -213,8 +212,8 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'django-filter', u'django-filter Documentation',
-     [u'Alex Gaynor and others.'], 1)
+    ('index', 'django-filter', 'django-filter Documentation',
+     ['Alex Gaynor and others.'], 1)
 ]
 
 # If true, show URL addresses after external links.
@@ -227,8 +226,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'django-filter', u'django-filter Documentation',
-   u'Alex Gaynor and others.', 'django-filter', 'One line description of project.',
+  ('index', 'django-filter', 'django-filter Documentation',
+   'Alex Gaynor and others.', 'django-filter', 'One line description of project.',
    'Miscellaneous'),
 ]
 

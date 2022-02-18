@@ -1,4 +1,3 @@
-
 from django.test import TestCase, override_settings
 
 from django_filters.conf import is_callable, settings
@@ -76,7 +75,7 @@ class IsCallableTests(TestCase):
         def func():
             pass
 
-        class Class(object):
+        class Class:
             def __call__(self):
                 pass
 

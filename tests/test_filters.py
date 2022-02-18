@@ -1,5 +1,5 @@
 import inspect
-import mock
+from unittest import mock
 from collections import OrderedDict
 from datetime import date, datetime, time, timedelta
 
@@ -515,7 +515,7 @@ class MultipleChoiceFilterTests(TestCase):
             self.assertListEqual(
                 expected_pks,
                 item[1],
-                'Lists Differ: {0} != {1} for case {2}'.format(
+                'Lists Differ: {} != {} for case {}'.format(
                     expected_pks, item[1], item[0]))
 
 
@@ -652,7 +652,7 @@ class TypedMultipleChoiceFilterTests(TestCase):
             self.assertListEqual(
                 expected_pks,
                 item[1],
-                'Lists Differ: {0} != {1} for case {2}'.format(
+                'Lists Differ: {} != {} for case {}'.format(
                     expected_pks, item[1], item[0]))
 
 

@@ -1,6 +1,6 @@
 import contextlib
 import datetime
-import mock
+from unittest import mock
 import unittest
 from operator import attrgetter
 
@@ -406,7 +406,7 @@ class DateTimeFilterTests(TestCase):
         self.assertEqual(
             len(f.qs),
             1,
-            "%s isn't matching %s when cleaned" % (check_dt, ten_min_ago))
+            f"{check_dt} isn't matching {ten_min_ago} when cleaned")
         self.assertQuerysetEqual(f.qs, [2], lambda o: o.pk)
 
 
@@ -1773,13 +1773,13 @@ class CSVFilterTests(TestCase):
 
         cases = [
             (None, [1, 2, 3, 4]),
-            (QueryDict('published__in=%s&published__in=%s' % (after, before)), [3, 4]),
+            (QueryDict(f'published__in={after}&published__in={before}'), [3, 4]),
             ({'published__in': ''}, [1, 2, 3, 4]),
             ({'published__in': ','}, []),
-            ({'published__in': '%s' % (after, )}, [1, 2]),
-            ({'published__in': '%s,%s' % (after, before, )}, [1, 2, 3, 4]),
-            ({'published__in': '%s,,%s' % (after, before, )}, [1, 2, 3, 4]),
-            ({'published__in': '%s,' % (after, )}, [1, 2]),
+            ({'published__in': f'{after}'}, [1, 2]),
+            ({'published__in': f'{after},{before}'}, [1, 2, 3, 4]),
+            ({'published__in': f'{after},,{before}'}, [1, 2, 3, 4]),
+            ({'published__in': f'{after},'}, [1, 2]),
         ]
 
         for params, expected in cases:
@@ -1854,17 +1854,17 @@ class CSVRangeFilterTests(TestCase):
         f = F({'published__range': ','})
         self.assertEqual(f.qs.count(), 0)
 
-        f = F({'published__range': '%s' % (self.before_5pm, )})
+        f = F({'published__range': f'{self.before_5pm}'})
         self.assertFalse(f.is_valid())
 
-        f = F({'published__range': '%s,%s' % (self.before_5pm, self.around_5pm, )})
+        f = F({'published__range': f'{self.before_5pm},{self.around_5pm}'})
         self.assertEqual(f.qs.count(), 3)
 
-        f = F({'published__range': '%s,,%s' % (self.before_5pm, self.after_5pm, )})
+        f = F({'published__range': f'{self.before_5pm},,{self.after_5pm}'})
         self.assertFalse(f.is_valid())
 
         # empty value is interpreted as None type
-        f = F({'published__range': '%s,' % (self.before_5pm, )})
+        f = F({'published__range': f'{self.before_5pm},'})
         self.assertEqual(f.qs.count(), 0)
 
 

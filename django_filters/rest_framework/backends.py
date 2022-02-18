@@ -125,7 +125,7 @@ class DjangoFilterBackend(metaclass=RenameAttributes):
         except Exception:
             queryset = None
             warnings.warn(
-                "{} is not compatible with schema generation".format(view.__class__)
+                f"{view.__class__} is not compatible with schema generation"
             )
 
         filterset_class = self.get_filterset_class(view, queryset)
@@ -145,7 +145,7 @@ class DjangoFilterBackend(metaclass=RenameAttributes):
         except Exception:
             queryset = None
             warnings.warn(
-                "{} is not compatible with schema generation".format(view.__class__)
+                f"{view.__class__} is not compatible with schema generation"
             )
 
         filterset_class = self.get_filterset_class(view, queryset)

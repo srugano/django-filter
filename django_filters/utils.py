@@ -7,7 +7,7 @@ from django.core.exceptions import FieldError
 from django.db import models
 from django.db.models.constants import LOOKUP_SEP
 from django.db.models.expressions import Expression
-from django.db.models.fields import FieldDoesNotExist
+from django.core.exceptions import FieldDoesNotExist
 from django.db.models.fields.related import ForeignObjectRel, RelatedField
 from django.utils import timezone
 from django.utils.encoding import force_str
@@ -25,7 +25,7 @@ class MigrationNotice(DeprecationWarning):
     url = 'https://django-filter.readthedocs.io/en/master/guide/migration.html'
 
     def __init__(self, message):
-        super().__init__('%s See: %s' % (message, self.url))
+        super().__init__(f'{message} See: {self.url}')
 
 
 class RenameAttributesBase(type):

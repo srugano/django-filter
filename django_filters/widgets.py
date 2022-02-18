@@ -37,7 +37,7 @@ class LinkWidget(forms.Widget):
         return mark_safe('\n'.join(output))
 
     def render_options(self, choices, selected_choices, name):
-        selected_choices = set(force_str(v) for v in selected_choices)
+        selected_choices = {force_str(v) for v in selected_choices}
         output = []
         for option_value, option_label in chain(self.choices, choices):
             if isinstance(option_label, (list, tuple)):

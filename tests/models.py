@@ -47,7 +47,7 @@ class User(models.Model):
     status = models.IntegerField(choices=STATUS_CHOICES, default=0)
 
     is_active = models.BooleanField(default=False)
-    is_employed = models.NullBooleanField(default=False)
+    is_employed = models.BooleanField(default=False, null=True)
 
     favorite_books = models.ManyToManyField('Book', related_name='lovers')
 
@@ -84,7 +84,7 @@ class Comment(models.Model):
     time = models.TimeField()
 
     def __str__(self):
-        return "%s said %s" % (self.author, self.text[:25])
+        return f"{self.author} said {self.text[:25]}"
 
 
 class Article(models.Model):
@@ -94,7 +94,7 @@ class Article(models.Model):
 
     def __str__(self):
         if self.author_id:
-            return "%s on %s" % (self.author, self.published)
+            return f"{self.author} on {self.published}"
         return "Anonymous on %s" % self.published
 
 
@@ -142,7 +142,7 @@ class Location(models.Model):
     open_days = models.CharField(max_length=7)
 
     def __str__(self):
-        return '%s: %s' % (self.company.name, self.name)
+        return f'{self.company.name}: {self.name}'
 
 
 class Account(models.Model):

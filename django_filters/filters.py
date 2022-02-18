@@ -62,7 +62,7 @@ __all__ = [
 ]
 
 
-class Filter(object):
+class Filter:
     creation_counter = 0
     field_class = forms.Field
 
@@ -145,7 +145,7 @@ class Filter(object):
             return qs
         if self.distinct:
             qs = qs.distinct()
-        lookup = '%s__%s' % (self.field_name, self.lookup_expr)
+        lookup = f'{self.field_name}__{self.lookup_expr}'
         qs = self.get_method(qs)(**{lookup: value})
         return qs
 
@@ -169,7 +169,7 @@ class ChoiceFilter(Filter):
         if value != self.null_value:
             return super().filter(qs, value)
 
-        qs = self.get_method(qs)(**{'%s__%s' % (self.field_name, self.lookup_expr): None})
+        qs = self.get_method(qs)(**{f'{self.field_name}__{self.lookup_expr}': None})
         return qs.distinct() if self.distinct else qs
 
 
@@ -295,7 +295,7 @@ class DurationFilter(Filter):
     field_class = forms.DurationField
 
 
-class QuerySetRequestMixin(object):
+class QuerySetRequestMixin:
     """
     Add callable functionality to filters that support the ``queryset``
     argument. If the ``queryset`` is callable, then it **must** accept the
@@ -440,7 +440,7 @@ class DateRangeFilter(ChoiceFilter):
         if filters is not None:
             self.filters = filters
 
-        unique = set([x[0] for x in self.choices]) ^ set(self.filters)
+        unique = {x[0] for x in self.choices} ^ set(self.filters)
         assert not unique, \
             "Keys must be present in both 'choices' and 'filters'. Missing keys: " \
             "'%s'" % ', '.join(sorted(unique))
@@ -540,7 +540,7 @@ class BaseCSVFilter(Filter):
         expression_name = ''.join(p.capitalize() for p in parts)
 
         # DateTimeYearInField
-        return str('%s%sField' % (type_name, expression_name))
+        return str(f'{type_name}{expression_name}Field')
 
 
 class BaseInFilter(BaseCSVFilter):
@@ -587,7 +587,7 @@ class LookupChoiceFilter(Filter):
     def __init__(self, field_name=None, lookup_choices=None, field_class=None, **kwargs):
         self.empty_label = kwargs.pop('empty_label', settings.EMPTY_CHOICE_LABEL)
 
-        super(LookupChoiceFilter, self).__init__(field_name=field_name, **kwargs)
+        super().__init__(field_name=field_name, **kwargs)
 
         self.lookup_choices = lookup_choices
         if field_class is not None:
@@ -646,10 +646,10 @@ class LookupChoiceFilter(Filter):
 
     def filter(self, qs, lookup):
         if not lookup:
-            return super(LookupChoiceFilter, self).filter(qs, None)
+            return super().filter(qs, None)
 
         self.lookup_expr = lookup.lookup_expr
-        return super(LookupChoiceFilter, self).filter(qs, lookup.value)
+        return super().filter(qs, lookup.value)
 
 
 class OrderingFilter(BaseCSVFilter, ChoiceFilter):
@@ -750,7 +750,7 @@ class OrderingFilter(BaseCSVFilter, ChoiceFilter):
         return [val for pair in zip(ascending, descending) for val in pair]
 
 
-class FilterMethod(object):
+class FilterMethod:
     """
     This helper is used to override Filter.filter() when a 'method' argument
     is passed. It proxies the call to the actual method on the filter's parent.

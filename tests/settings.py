@@ -1,4 +1,3 @@
-
 # ensure package/conf is importable
 from django_filters.conf import DEFAULTS
 
