@@ -502,7 +502,7 @@ class HandleTimezone(TestCase):
     def test_handle_dst_starting(self):
         dst_starting_date = datetime.datetime(2017, 10, 15, 0, 0, 0, 0)
         handled = handle_timezone(dst_starting_date, True)
-        self.assertEqual(handled, get_default_timezone().localize(dst_starting_date, True))
+        self.assertEqual(handled, get_default_timezone().make_aware(dst_starting_date))
 
 
 class TranslateValidationDataTests(TestCase):

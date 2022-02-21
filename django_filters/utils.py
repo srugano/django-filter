@@ -220,7 +220,7 @@ def resolve_field(model_field, lookup_expr):
 
 def handle_timezone(value, is_dst=None):
     if settings.USE_TZ and timezone.is_naive(value):
-        return timezone.make_aware(value, timezone.get_current_timezone(), is_dst)
+        return timezone.make_aware(value, timezone.get_current_timezone())
     elif not settings.USE_TZ and timezone.is_aware(value):
         return timezone.make_naive(value, timezone.utc)
     return value

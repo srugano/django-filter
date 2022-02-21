@@ -35,7 +35,7 @@ TEMPLATES = [{
 
 
 STATIC_URL = '/static/'
-
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # XMLTestRunner output
 TEST_OUTPUT_DIR = '.xmlcoverage'
