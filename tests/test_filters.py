@@ -94,19 +94,6 @@ class FilterTests(TestCase):
         field = f.field
         self.assertIsInstance(field, forms.Field)
 
-    def test_field_with_lookup_types_removal(self):
-        msg = (
-            "The `lookup_expr` argument no longer accepts `None` or a list of "
-            "expressions. Use the `LookupChoiceFilter` instead. See: "
-            "https://django-filter.readthedocs.io/en/master/guide/migration.html"
-        )
-
-        with self.assertRaisesMessage(AssertionError, msg):
-            Filter(lookup_expr=[])
-
-        with self.assertRaisesMessage(AssertionError, msg):
-            Filter(lookup_expr=None)
-
     def test_field_params(self):
         with mock.patch.object(Filter, 'field_class',
                                spec=['__call__']) as mocked:
@@ -387,6 +374,11 @@ class MultipleChoiceFilterTests(TestCase):
     def test_conjoined_true(self):
         f = MultipleChoiceFilter(conjoined=True)
         self.assertTrue(f.conjoined)
+
+    def test_is_noop_false(self):
+        f = MultipleChoiceFilter(required=False)
+        f.always_filter = False
+        self.assertFalse(f.is_noop(None, ['value']))
 
     def test_filtering(self):
         qs = mock.Mock(spec=['filter'])
@@ -1585,6 +1577,6 @@ class OrderingFilterTests(TestCase):
             ])
 
     def test_help_text(self):
-        # regression test for #756 - the ususal CSV help_text is not relevant to ordering filters.
+        # regression test for #756 - the usual CSV help_text is not relevant to ordering filters.
         self.assertEqual(OrderingFilter().field.help_text, '')
         self.assertEqual(OrderingFilter(help_text='a').field.help_text, 'a')

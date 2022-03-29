@@ -1,3 +1,5 @@
+
+from unittest import mock
 from django.test import TestCase, override_settings
 
 from django_filters.conf import is_callable, settings
@@ -8,6 +10,9 @@ class DefaultSettingsTests(TestCase):
     def test_verbose_lookups(self):
         self.assertIsInstance(settings.VERBOSE_LOOKUPS, dict)
         self.assertIn('exact', settings.VERBOSE_LOOKUPS)
+
+    def test_default_lookup_expr(self):
+        self.assertEqual(settings.DEFAULT_LOOKUP_EXPR, 'exact')
 
     def test_disable_help_text(self):
         self.assertFalse(settings.DISABLE_HELP_TEXT)
@@ -88,3 +93,15 @@ class IsCallableTests(TestCase):
         self.assertFalse(is_callable(Class))
         self.assertTrue(is_callable(c))
         self.assertTrue(is_callable(c.method))
+
+
+class SettingsObjectTestCase(TestCase):
+
+    @mock.patch('django_filters.conf.DEPRECATED_SETTINGS', ['TEST_123'])
+    @mock.patch.dict('django_filters.conf.DEFAULTS', {'TEST_123': True})
+    def test_get_setting_deprecated(self):
+        with override_settings(FILTERS_TEST_123=True):
+            with self.assertWarns(DeprecationWarning):
+                settings.change_setting('FILTERS_TEST_123', True, True)
+                test_setting = settings.get_setting('TEST_123')
+                self.assertTrue(test_setting)

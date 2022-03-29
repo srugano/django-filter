@@ -173,9 +173,9 @@ for magic values. This is similar to the ``ChoiceFilter``'s null value handling.
 
         def filter(self, qs, value):
             if value != self.empty_value:
-                return super(MyCharFilter, self).filter(qs, value)
+                return super().filter(qs, value)
 
-            qs = self.get_method(qs)(**{'%s__%s' % (self.name, self.lookup_expr): ""})
+            qs = self.get_method(qs)(**{'%s__%s' % (self.field_name, self.lookup_expr): ""})
             return qs.distinct() if self.distinct else qs
 
 
@@ -199,7 +199,7 @@ behavior as an ``isnull`` filter.
             exclude = self.exclude ^ (value is False)
             method = qs.exclude if exclude else qs.filter
 
-            return method(**{self.name: ""})
+            return method(**{self.field_name: ""})
 
 
     class MyFilterSet(filters.FilterSet):
@@ -207,7 +207,37 @@ behavior as an ``isnull`` filter.
 
         class Meta:
             model = MyModel
+            fields = []
 
+
+Filtering by relative times
+---------------------------
+
+Given a model with a timestamp field, it may be useful to filter based on relative times.
+For instance, perhaps we want to get data from the past *n* hours.
+This could be accomplished the with a ``NumberFilter`` that invokes a custom method.
+
+.. code-block:: python
+
+    from django.utils import timezone
+    from datetime import timedelta
+    ...
+
+    class DataModel(models.Model):
+        time_stamp = models.DateTimeField()
+
+
+    class DataFilter(django_filters.FilterSet):
+        hours = django_filters.NumberFilter(
+            field_name='time_stamp', method='get_past_n_hours', label="Past n hours")
+
+        def get_past_n_hours(self, queryset, field_name, value):
+            time_threshold = timezone.now() - timedelta(hours=int(value))
+            return queryset.filter(time_stamp__gte=time_threshold)
+
+        class Meta:
+            model = DataModel
+            fields = ('hours',)
 
 Using ``initial`` values as defaults
 ------------------------------------
@@ -243,4 +273,18 @@ If defaults are necessary though, the following should mimic the pre-1.0 behavio
                     if not data.get(name) and initial:
                         data[name] = initial
 
-            super(BaseFilterSet, self).__init__(data, *args, **kwargs)
+            super().__init__(data, *args, **kwargs)
+
+
+Adding model field ``help_text`` to filters
+-------------------------------------------
+
+Model field ``help_text`` is not used by filters by default. It can be added
+using a simple FilterSet base class::
+
+  class HelpfulFilterSet(django_filters.FilterSet):
+      @classmethod
+      def filter_for_field(cls, f, name, lookup_expr):
+          filter = super(HelpfulFilterSet, cls).filter_for_field(f, name, lookup_expr)
+          filter.extra['help_text'] = f.help_text
+          return filter

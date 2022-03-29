@@ -778,7 +778,7 @@ class DateRangeFilterTests(TestCase):
 
     @contextlib.contextmanager
     def relative_to(self, today):
-        today = get_default_timezone().make_aware(dst_starting_date)(today)
+        today = make_aware(today)
         yesterday = today - datetime.timedelta(days=1)
         five_days_ago = today - datetime.timedelta(days=5)
         two_weeks_ago = today - datetime.timedelta(days=14)

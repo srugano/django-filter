@@ -21,9 +21,9 @@ Full documentation on `read the docs`_.
 Requirements
 ------------
 
-* **Python**: 3.4, 3.5, 3.6, 3.7
-* **Django**: 1.11, 2.0, 2.1, 2.2
-* **DRF**: 3.8+
+* **Python**: 3.9
+* **Django**: 3.2, 4.0
+* **DRF**: 3.12+
 
 From Version 2.0 Django Filter is Python 3 only.
 If you need to support Python 2.7 use the version 1.1 release.

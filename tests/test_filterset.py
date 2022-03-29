@@ -2,7 +2,7 @@ from unittest import mock
 import unittest
 
 from django.db import models
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 from django_filters.exceptions import FieldLookupError
 from django_filters.filters import (
@@ -198,6 +198,13 @@ class FilterSetFilterForFieldTests(TestCase):
         self.assertIsInstance(result, NumberFilter)
         self.assertEqual(result.field_name, 'date')
 
+    @override_settings(FILTERS_DEFAULT_LOOKUP_EXPR='icontains')
+    def test_modified_default_lookup(self):
+        f = User._meta.get_field('username')
+        result = FilterSet.filter_for_field(f, 'username')
+        self.assertIsInstance(result, CharFilter)
+        self.assertEqual(result.lookup_expr, 'icontains')
+
     @unittest.skip('todo')
     def test_filter_overrides(self):
         pass
@@ -330,6 +337,13 @@ class FilterSetClassCreationTests(TestCase):
         self.assertEqual(len(F.base_filters), 1)
         self.assertListEqual(list(F.base_filters), ['username'])
 
+    @override_settings(FILTERS_DEFAULT_LOOKUP_EXPR='icontains')
+    def test_declaring_filter_other_default_lookup(self):
+        class F(FilterSet):
+            username = CharFilter()
+
+        self.assertEqual(F.base_filters['username'].lookup_expr, 'icontains')
+
     def test_model_derived(self):
         class F(FilterSet):
             class Meta:
@@ -340,6 +354,16 @@ class FilterSetClassCreationTests(TestCase):
         self.assertEqual(len(F.base_filters), 3)
         self.assertListEqual(list(F.base_filters),
                              ['title', 'price', 'average_rating'])
+
+    @override_settings(FILTERS_DEFAULT_LOOKUP_EXPR='icontains')
+    def test_model_derived_other_default_lookup(self):
+        class F(FilterSet):
+            class Meta:
+                model = Book
+                fields = '__all__'
+
+        for filter_ in F.base_filters.values():
+            self.assertEqual(filter_.lookup_expr, 'icontains')
 
     def test_model_no_fields_or_exclude(self):
         with self.assertRaises(AssertionError) as excinfo:
@@ -401,7 +425,6 @@ class FilterSetClassCreationTests(TestCase):
 
     def test_meta_fields_dictionary_derived(self):
         class F(FilterSet):
-
             class Meta:
                 model = Book
                 fields = {'price': ['exact', 'gte', 'lte'], }
@@ -410,6 +433,20 @@ class FilterSetClassCreationTests(TestCase):
         self.assertEqual(len(F.base_filters), 3)
 
         expected_list = ['price', 'price__gte', 'price__lte', ]
+        self.assertTrue(checkItemsEqual(list(F.base_filters), expected_list))
+
+    @override_settings(FILTERS_DEFAULT_LOOKUP_EXPR='lte')
+    def test_meta_fields_dictionary_derived_other_default_lookup(self):
+        class F(FilterSet):
+
+            class Meta:
+                model = Book
+                fields = {'price': ['exact', 'gte', 'lte'], }
+
+        self.assertEqual(len(F.declared_filters), 0)
+        self.assertEqual(len(F.base_filters), 3)
+
+        expected_list = ['price__exact', 'price__gte', 'price', ]
         self.assertTrue(checkItemsEqual(list(F.base_filters), expected_list))
 
     def test_meta_fields_containing_autofield(self):
@@ -429,10 +466,11 @@ class FilterSetClassCreationTests(TestCase):
             username = CharFilter()
 
             class Meta:
-                model = Book
-                fields = {'id': ['exact'],
-                          'username': ['exact'],
-                          }
+                model = User
+                fields = {
+                    'id': ['exact'],
+                    'username': ['exact'],
+                }
 
         self.assertEqual(len(F.declared_filters), 1)
         self.assertEqual(len(F.base_filters), 2)
@@ -440,8 +478,11 @@ class FilterSetClassCreationTests(TestCase):
         expected_list = ['id', 'username']
         self.assertTrue(checkItemsEqual(list(F.base_filters), expected_list))
 
-    def test_meta_fields_containing_unknown(self):
-        with self.assertRaises(TypeError) as excinfo:
+    def test_meta_fields_list_containing_unknown_fields(self):
+        msg = ("'Meta.fields' must not contain non-model field names: "
+               "other, another")
+
+        with self.assertRaisesMessage(TypeError, msg):
             class F(FilterSet):
                 username = CharFilter()
 
@@ -449,35 +490,46 @@ class FilterSetClassCreationTests(TestCase):
                     model = Book
                     fields = ('username', 'price', 'other', 'another')
 
-        self.assertEqual(
-            str(excinfo.exception),
-            "'Meta.fields' contains fields that are not defined on this FilterSet: "
-            "other, another"
-        )
+    def test_meta_fields_dict_containing_unknown_fields(self):
+        msg = "'Meta.fields' must not contain non-model field names: other"
 
-    def test_meta_fields_dictionary_containing_unknown(self):
-        with self.assertRaises(TypeError):
+        with self.assertRaisesMessage(TypeError, msg):
             class F(FilterSet):
 
                 class Meta:
                     model = Book
-                    fields = {'id': ['exact'],
-                              'title': ['exact'],
-                              'other': ['exact'],
-                              }
+                    fields = {
+                        'id': ['exact'],
+                        'title': ['exact'],
+                        'other': ['exact'],
+                    }
+
+    def test_meta_fields_dict_containing_declarative_alias(self):
+        # Meta.fields dict cannot generate lookups for an *aliased* field
+        msg = "'Meta.fields' must not contain non-model field names: other"
+
+        with self.assertRaisesMessage(TypeError, msg):
+            class F(FilterSet):
+                other = CharFilter()
+
+                class Meta:
+                    model = Book
+                    fields = {
+                        'id': ['exact'],
+                        'title': ['exact'],
+                        'other': ['exact'],
+                    }
 
     def test_meta_fields_invalid_lookup(self):
         # We want to ensure that non existent lookups (or just simple misspellings)
         # throw a useful exception containg the field and lookup expr.
-        with self.assertRaises(FieldLookupError) as context:
+        msg = "Unsupported lookup 'flub' for field 'tests.User.username'."
+
+        with self.assertRaisesMessage(FieldLookupError, msg):
             class F(FilterSet):
                 class Meta:
                     model = User
                     fields = {'username': ['flub']}
-
-        exc = str(context.exception)
-        self.assertIn('tests.User.username', exc)
-        self.assertIn('flub', exc)
 
     def test_meta_exlude_with_declared_and_declared_wins(self):
         class F(FilterSet):
@@ -618,6 +670,62 @@ class FilterSetClassCreationTests(TestCase):
         self.assertEqual(len(Parent.base_filters), 2)
         self.assertEqual(len(Child.base_filters), 1)
         self.assertEqual(len(Grandchild.base_filters), 1)
+
+    @override_settings(FILTERS_DEFAULT_LOOKUP_EXPR='lt')
+    def test_transforms_other_default_lookup(self):
+        class F(FilterSet):
+            class Meta:
+                model = Article
+                fields = {
+                    'published': ['lt', 'year__lt'],
+                }
+
+        self.assertEqual(len(F.base_filters), 2)
+
+        expected_list = ['published', 'published__year']
+        self.assertTrue(checkItemsEqual(list(F.base_filters), expected_list))
+
+    def test_declared_filter_multiple_inheritance(self):
+        class A(FilterSet):
+            f = CharFilter()
+
+        class B(FilterSet):
+            f = NumberFilter()
+
+        class F(A, B):
+            pass
+
+        filters = {name: type(f) for name, f in F.declared_filters.items()}
+        self.assertEqual(filters, {'f': CharFilter})
+
+    def test_declared_filter_multiple_inheritance_field_ordering(self):
+        class Base(FilterSet):
+            f1 = CharFilter()
+            f2 = CharFilter()
+
+        class A(Base):
+            f3 = NumberFilter()
+
+        class B(FilterSet):
+            f3 = CharFilter()
+            f4 = CharFilter()
+
+        class F(A, B):
+            f2 = NumberFilter()
+            f5 = CharFilter()
+
+        fields = {name: type(f) for name, f in F.declared_filters.items()}
+
+        # `NumberFilter`s should be the 'winners' in filter name conflicts
+        # - `F.f2` should override `Base.F2`
+        # - `A.f3` should override `B.f3`
+        assert fields == {
+            'f1': CharFilter,
+            'f2': NumberFilter,
+            'f3': NumberFilter,
+            'f4': CharFilter,
+            'f5': CharFilter,
+        }
 
 
 class FilterSetInstantiationTests(TestCase):

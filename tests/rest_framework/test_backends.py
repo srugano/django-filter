@@ -1,5 +1,5 @@
 import warnings
-from unittest import skipIf
+from unittest import mock, skipIf
 
 from django.db.models import BooleanField
 from django.test import TestCase
@@ -15,7 +15,7 @@ from django_filters.rest_framework import (
 )
 
 from ..models import Article
-from .models import FilterableItem
+from .models import CategoryItem, FilterableItem
 
 factory = APIRequestFactory()
 
@@ -23,6 +23,12 @@ factory = APIRequestFactory()
 class FilterableItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = FilterableItem
+        fields = '__all__'
+
+
+class CategoryItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CategoryItem
         fields = '__all__'
 
 
@@ -50,6 +56,13 @@ class FilterFieldsRootView(FilterableItemView):
 
 class FilterClassRootView(FilterableItemView):
     filterset_class = SeveralFieldsFilter
+
+
+class CategoryItemView(generics.ListCreateAPIView):
+    queryset = CategoryItem.objects.all()
+    serializer_class = CategoryItemSerializer
+    filter_backends = (DjangoFilterBackend,)
+    filterset_fields = ["category"]
 
 
 class GetFilterClassTests(TestCase):
@@ -108,7 +121,7 @@ class GetFilterClassTests(TestCase):
         view.filterset_fields = ['non_existent']
         queryset = FilterableItem.objects.all()
 
-        msg = "'Meta.fields' contains fields that are not defined on this FilterSet: non_existent"
+        msg = "'Meta.fields' must not contain non-model field names: non_existent"
         with self.assertRaisesMessage(TypeError, msg):
             backend.get_filterset_class(view, queryset)
 
@@ -160,7 +173,7 @@ class GetSchemaFieldsTests(TestCase):
 
         backend = DjangoFilterBackend()
 
-        msg = "'Meta.fields' contains fields that are not defined on this FilterSet: non_existent"
+        msg = "'Meta.fields' must not contain non-model field names: non_existent"
         with self.assertRaisesMessage(TypeError, msg):
             backend.get_schema_fields(View())
 
@@ -236,6 +249,25 @@ class GetSchemaOperationParametersTests(TestCase):
         fields = [f['name'] for f in fields]
 
         self.assertEqual(fields, ['decimal', 'date'])
+
+    def test_get_operation_parameters_with_filterset_fields_list_with_choices(self):
+        backend = DjangoFilterBackend()
+        fields = backend.get_schema_operation_parameters(CategoryItemView())
+
+        self.assertEqual(
+            fields,
+            [{
+                'name': 'category',
+                'required': False,
+                'in': 'query',
+                'description': 'category',
+                'schema': {
+                    'type': 'string',
+                    'enum': ['home', 'office']
+                },
+
+            }]
+        )
 
 
 class TemplateTests(TestCase):
@@ -407,3 +439,35 @@ class RenamedViewSetAttributesTests(TestCase):
         message = str(recorded.pop().message)
         self.assertEqual(message, expected)
         self.assertEqual(len(recorded), 0)
+
+
+class DjangoFilterBackendTestCase(TestCase):
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.backend = DjangoFilterBackend()
+        cls.backend.get_filterset_class = lambda x, y: None
+
+    def test_get_filterset_none_filter_class(self):
+        filterset = self.backend.get_filterset(mock.Mock(), mock.Mock(), mock.Mock())
+        self.assertIsNone(filterset)
+
+    def test_filter_queryset_none_filter_class(self):
+        prev_qs = mock.Mock()
+        qs = self.backend.filter_queryset(mock.Mock(), prev_qs, mock.Mock())
+        self.assertIs(qs, prev_qs)
+
+    def test_to_html_none_filter_class(self):
+        html = self.backend.to_html(mock.Mock(), mock.Mock(), mock.Mock())
+        self.assertIsNone(html)
+
+    def test_get_schema_operation_parameters_userwarning(self):
+        with self.assertWarns(UserWarning):
+            view = mock.Mock()
+            view.__class__.return_value = 'Test'
+            view.get_queryset.side_effect = Exception
+            self.backend.get_schema_operation_parameters(view)
+
+    @mock.patch('django_filters.compat.is_crispy', return_value=True)
+    def test_template_crispy(self, _):
+        self.assertEqual(self.backend.template, 'django_filters/rest_framework/crispy_form.html')

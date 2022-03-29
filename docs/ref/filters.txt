@@ -73,8 +73,8 @@ transformation and empty value checking should be unnecessary.
             lookup = '__'.join([name, 'isnull'])
             return queryset.filter(**{lookup: False})
 
-            # alternatively, it may not be necessary to construct the lookup.
-            return queryset.filter(published_on__isnull=False)
+            # alternatively, you could opt to hardcode the lookup. e.g.,
+            # return queryset.filter(published_on__isnull=False)
 
         class Meta:
             model = Book
@@ -107,6 +107,11 @@ span relationships. Defaults to ``False``.
 
 A boolean that specifies whether the Filter should use ``filter`` or ``exclude``
 on the queryset. Defaults to ``False``.
+
+``required``
+~~~~~~~~~~~~
+
+A boolean that specifies whether the Filter is required or not. Defaults to ``False``.
 
 
 ``**kwargs``
@@ -573,7 +578,7 @@ Similar to a ``RangeFilter`` except it uses ISO 8601 formatted values instead of
 Example::
 
     class Article(models.Model):
-        published = dajngo_filters.IsoDateTimeField()
+        published = django_filters.IsoDateTimeField()
 
     class F(FilterSet):
         published = IsoDateTimeFromToRangeFilter()
@@ -814,7 +819,7 @@ If you wish to sort by non-model fields, you'll need to add custom handling to a
     class CustomOrderingFilter(django_filters.OrderingFilter):
 
         def __init__(self, *args, **kwargs):
-            super(CustomOrderingFilter, self).__init__(*args, **kwargs)
+            super().__init__(*args, **kwargs)
             self.extra['choices'] += [
                 ('relevance', 'Relevance'),
                 ('-relevance', 'Relevance (descending)'),
@@ -827,4 +832,4 @@ If you wish to sort by non-model fields, you'll need to add custom handling to a
                 # sort queryset by relevance
                 return ...
 
-            return super(CustomOrderingFilter, self).filter(qs, value)
+            return super().filter(qs, value)
